@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import type { ReactNode } from "react";
-import { useExperiment } from "../hooks/useExperiments";
+import { useExperiments } from "../hooks/useExperiments";
 import type { ExperimentsContextType } from "../types/experimentContext";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -12,7 +12,7 @@ export const ExperimentsProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const value = useExperiment();
+  const value = useExperiments();
 
   return (
     <ExperimentsContext.Provider value={value}>

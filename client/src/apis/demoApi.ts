@@ -1,24 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import httpClient from "./httpClient";
 
-export const runDemoRequest = async (endpoint: string) => {
-  const start = performance.now();
-  try {
-    const res = await httpClient.get(endpoint);
-    const latency = Math.round(performance.now() - start);
+type DemoType = "fast" | "slow" | "unstable";
 
-    return {
-      status: res.status,
-      latency,
-      body: res.data,
-    };
-  } catch (err: any) {
-    const latency = Math.round(performance.now() - start);
+const DEMO_MAP: Record<string, DemoType> = {
+  fast: "fast",
+  slow: "slow",
+  unstable: "unstable",
 
-    return {
-      status: err.status || "TIMEOUT",
-      latency,
-      error: err.message || "Request failed",
-    };
+  // UI labels mapping (safe)
+  "fast test": "fast",
+  "slow test": "slow",
+  "unstable test": "unstable",
+  latency: "slow",
+  error: "unstable",
+};
+
+export const runDemoRequest = async (type: string) => {
+  const key = type.toLowerCase().trim();
+
+  const mappedType = DEMO_MAP[key];
+
+  if (!mappedType) {
+    console.error("Invalid demo type from UI:", type);
+    throw new Error(`Invalid demo request type: ${type}`);
   }
+
+  return httpClient.get(`/api/demo/${mappedType}`);
 };

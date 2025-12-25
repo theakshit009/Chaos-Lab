@@ -1,35 +1,28 @@
-import StatCard from '../../common/StatCard';
+import StatCard from "../../common/StatCard";
+import type { MetricsSummary } from "../../types/metrics";
 
-const OverviewStatsRow = () => {
-  // later get from API / socket
-  const data = {
-    avgLatency: 55,
-    errorRate: 0.01,
-    totalRequests: 12456,
-    activeExperiments: 3,
-  };
-
+const OverviewStatsRow = ({
+  summary,
+}: {
+  summary: MetricsSummary;
+}) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <StatCard
         label="Average Latency"
-        value={`${data.avgLatency} ms`}
-        icon="latency"
+        value={`${summary.avgLatency} ms`}
       />
       <StatCard
         label="Error Rate"
-        value={`${data.errorRate}%`}
-        icon="error"
+        value={`${summary.errorRate}%`}
       />
       <StatCard
-        label="Total Requests"
-        value={data.totalRequests.toLocaleString()}
-        icon="requests"
+        label="Requests / Sec"
+        value={summary.rps}
       />
       <StatCard
-        label="Active Experiments"
-        value={data.activeExperiments}
-        icon="flame"
+        label="CPU Usage"
+        value={`${summary.cpuUsage}%`}
       />
     </div>
   );

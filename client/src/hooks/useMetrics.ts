@@ -1,12 +1,10 @@
- import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { useEffect, useState } from "react";
+import httpClient from "../apis/httpClient";
 import type {
   MetricsSummary,
   TimeSeriesPoint,
   RequestLog,
 } from "../types/metrics";
-
-let socket: Socket | null = null;
 
 export const useMetrics = () => {
   const [summary, setSummary] = useState<MetricsSummary>({
@@ -21,47 +19,51 @@ export const useMetrics = () => {
   const [rpsSeries, setRpsSeries] = useState<TimeSeriesPoint[]>([]);
   const [logs, setLogs] = useState<RequestLog[]>([]);
 
+  const fetchMetrics = async () => {
+    try {
+      const res = await httpClient.get("/api/metrics");
+
+      const now = new Date().toISOString(); // ✅ STRING timestamp
+
+      const { summary: s, logs: l } = res.data;
+
+      setSummary(s);
+
+      setLatencySeries((prev) => [
+        ...prev.slice(-30),
+        {
+          time: now,
+          value: s.avgLatency,
+        },
+      ]);
+
+      setErrorSeries((prev) => [
+        ...prev.slice(-30),
+        {
+          time: now,
+          value: s.errorRate,
+        },
+      ]);
+
+      setRpsSeries((prev) => [
+        ...prev.slice(-30),
+        {
+          time: now,
+          value: s.rps,
+        },
+      ]);
+
+      setLogs(l ?? []);
+    } catch (err) {
+      console.error("Failed to fetch metrics", err);
+    }
+  };
+
   useEffect(() => {
-    socket = io("http://localhost:4000", {
-      transports: ["websocket"],
-    });
-
-    // 🔹 Summary cards
-    socket.on("metrics:summary", (data: MetricsSummary) => {
-      setSummary(data);
-    });
-
-    // 🔹 Latency graph
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    socket.on("metrics:latency", (point: any) => {
-  setLatencySeries((prev) => [
-    ...prev.slice(-30),
-    {
-      time: point.time,
-      value: point.latency, // 🔥 FIX
-    },
-  ]);
-});
-
-    // 🔹 Error rate graph
-    socket.on("metrics:errorRate", (point: TimeSeriesPoint) => {
-      setErrorSeries((prev) => [...prev.slice(-30), point]);
-    });
-
-    // 🔹 Requests/sec graph
-    socket.on("metrics:rps", (point: TimeSeriesPoint) => {
-      setRpsSeries((prev) => [...prev.slice(-30), point]);
-    });
-
-    // 🔹 Request logs
-    socket.on("metrics:log", (log: RequestLog) => {
-      setLogs((prev) => [log, ...prev].slice(0, 15));
-    });
-
-    return () => {
-      socket?.disconnect();
-      socket = null;
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return {

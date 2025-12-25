@@ -1,58 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getLatestExperiment } from "../apis/experimentsApi";
 import type { Experiment } from "../types/experiments";
-import type { ChaosConfig } from "../types/chaos";
 
-type ExperimentSummary = {
-  avgLatency: number;
-  errorRate: number;
-};
-
-export const useExperiment = () => {
-  const [experiment, setExperiment] =
+export const useExperiments = () => {
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [lastExperiment, setLastExperiment] =
     useState<Experiment | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 🔹 Start a new experiment (overwrite previous)
-  const startExperiment = (
-    name: string,
+  const fetchLatest = async () => {
+    try {
+      setLoading(true);
+      const data = await getLatestExperiment();
+
+      if (data) {
+        setLastExperiment(data);
+        setExperiments([data]); // future-proof
+      }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    chaosConfig: ChaosConfig
-  ) => {
-    setExperiment({
-      id: crypto.randomUUID(),
-      name,
-      status: "RUNNING",
-      startedAt: new Date().toLocaleTimeString(),
-    });
+    } catch (err) {
+      setLastExperiment(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 🔹 Complete current experiment
-  const completeExperiment = (
-    summary: ExperimentSummary
-  ) => {
-    setExperiment((prev) => {
-      if (!prev) return null;
-
-      return {
-        ...prev,
-        status:
-          summary.errorRate > 20
-            ? "FAILED"
-            : "SUCCESS",
-        endedAt: new Date().toLocaleTimeString(),
-        summary,
-      };
-    });
-  };
-
-  // 🔹 Reset (optional)
-  const resetExperiment = () => {
-    setExperiment(null);
-  };
+  useEffect(() => {
+    fetchLatest();
+  }, []);
 
   return {
-    experiment,        // Dashboard reads this
-    startExperiment,   // Demo App triggers this
-    completeExperiment,
-    resetExperiment,
+    experiments,
+    lastExperiment,
+    loading,
+    fetchLatest,
   };
 };

@@ -1,8 +1,19 @@
 import httpClient from "./httpClient";
-import type { ChaosConfig } from "../types/chaos";
 
-export const getChaosConfig = () =>
-  httpClient.get<ChaosConfig>("/api/chaos/config").then((r) => r.data);
+export const getChaosConfig = async () => {
+  const res = await httpClient.get("/api/chaos");
+  return res.data;
+};
 
-export const updateChaosConfig = (config: ChaosConfig) =>
-  httpClient.post("/api/chaos/config", config).then((r) => r.data);
+export const updateChaosConfig = async (
+  payload: {
+    latencyMs?: number;
+    apiCrashRate?: number;
+  }
+) => {
+  const res = await httpClient.post(
+    "/api/chaos",
+    payload
+  );
+  return res.data;
+};
