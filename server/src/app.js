@@ -20,10 +20,12 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use("/api/demo", demoRoutes);
-app.use("/api/chaos", chaosRoutes);
-app.use("/api/experiments", experimentRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+app.use("/demo", demoRoutes);
+app.use("/chaos", chaosRoutes);
+app.use("/experiments", experimentRoutes);
+app.use("/metrics", metricsRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
